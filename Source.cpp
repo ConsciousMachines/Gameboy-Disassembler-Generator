@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <memory>
+#include <malloc.h>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -19,13 +19,8 @@ struct dis_line
 };
 
 
-dis_line disassemble(u8* bytes, u16 pc, long size)
+dis_line disassemble(u8* bytes, u16 pc)
 {
-	if (size - pc < 4) // we read 3 bytes ahead so dont want to overflow
-	{
-		printf("disassembler has reached the end of the instructions!\n"); getchar();
-	}
-
 	u8 b1 = bytes[pc + 0];
 	u8 b2 = bytes[pc + 1];
 	u8 b3 = bytes[pc + 2];
@@ -566,16 +561,16 @@ int main()
 	long file_size = ftell(fIn); 
 	const int fseek_set_value = fseek(fIn, 0, SEEK_SET); 
 	u8* bytes = (u8*)malloc(file_size); 
-	if (!bytes) exit(420);
+	if (!bytes) return 420;
 	fread(bytes, 1, file_size, fIn);
 	fclose(fIn);
 
 
 	
 	u16 pc = 0;
-	while (pc < 0x8000 - 4)
+	while (pc < 0x8000)
 	{
-		dis_line r = disassemble(bytes, pc, file_size);
+		dis_line r = disassemble(bytes, pc);
 		switch (r._size)
 		{
 		case 1: printf("%04x : %02x\t\t%s\n", r._address, r._bytes[0], r._text); break;
@@ -584,21 +579,7 @@ int main()
 		}
 		pc += r._size;
 	}
-	free(bytes);
 
-	/* text buffer length test 
-	for (int i = 0; i < 256; i++)
-	{
-		u8 ii = (u8)i;
-		u8 bytes[3]{ 0xF8, ii, 0x00 };
-		dis_line r = disassemble(bytes, 0, 420);
-		switch (r._size)
-		{
-		case 1: printf("%04x : %02x\t\t%s\n", r._address, r._bytes[0], r._text); break;
-		case 2: printf("%04x : %02x %02x\t\t%s\n", r._address, r._bytes[0], r._bytes[1], r._text); break;
-		case 3: printf("%04x : %02x %02x %02x\t\t%s\n", r._address, r._bytes[0], r._bytes[1], r._bytes[2], r._text); break;
-		}
-	}
-	*/
+	free(bytes);
 	return 0;
 }
