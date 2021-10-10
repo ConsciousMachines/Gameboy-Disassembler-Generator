@@ -15,7 +15,7 @@ for i in range(len(opcodes[:256])):
     cat_int = cat2int[category]
 
     if entry.__contains__('unused'): # for the unused opcodes 
-        full_instr = f'case 0x{hex_idx}: return dis_line{{ pc, 1, {{b1,b2,b3}}, "UNUSED\\n", {cat_int} }};'
+        full_instr = f'case 0x{hex_idx}: return dis_line{{ pc, 1, {{b1,b2,b3}}, "UNUSED\\0", {cat_int} }};'
         print(full_instr)
         continue
 
@@ -27,21 +27,21 @@ for i in range(len(opcodes[:256])):
     instr = ' '.join(parts[:-2])
     
     if int(size) == 1:
-        full_instr = f'case 0x{hex_idx}: return dis_line{{ pc, {size}, {{b1,b2,b3}},"{instr}\\n", {cat_int} }};'
+        full_instr = f'case 0x{hex_idx}: return dis_line{{ pc, {size}, {{b1,b2,b3}},"{instr}\\0", {cat_int} }};'
 
     elif int(size) == 2:
         if (instr.__contains__('u8')): # immediate unsigned u8
             instr2 = instr.replace('u8', '$%02x') 
-            full_instr = f'case 0x{hex_idx}: {{dis_line l = dis_line{{ pc, {size}, {{b1,b2,b3}},"" , {cat_int} }}; sprintf(l._text, "{instr2}\\n", b2); return l;}}'
+            full_instr = f'case 0x{hex_idx}: {{dis_line l = dis_line{{ pc, {size}, {{b1,b2,b3}},"" , {cat_int} }}; sprintf(l._text, "{instr2}\\0", b2); return l;}}'
         elif (instr.__contains__('i8')): #immediate signed i8, JR
             instr2 = instr.replace('i8', '$%02x') 
-            full_instr = f'case 0x{hex_idx}: {{dis_line l = dis_line{{ pc, {size}, {{b1,b2,b3}},"" , {cat_int} }}; sprintf(l._text, "{instr2} [%hhi]\\n", b2,b2); return l;}}'
+            full_instr = f'case 0x{hex_idx}: {{dis_line l = dis_line{{ pc, {size}, {{b1,b2,b3}},"" , {cat_int} }}; sprintf(l._text, "{instr2} [%hhi]\\0", b2,b2); return l;}}'
         else: # STOP instruction 
-            full_instr = f'case 0x{hex_idx}: return dis_line{{ pc, {size}, {{b1,b2,b3}},"{instr}\\n" , {cat_int} }};'
+            full_instr = f'case 0x{hex_idx}: return dis_line{{ pc, {size}, {{b1,b2,b3}},"{instr}\\0" , {cat_int} }};'
 
     elif int(size) == 3:
         instr2 = instr.replace('u16', '$%02x%02x')
-        full_instr = f'case 0x{hex_idx}: {{dis_line l = dis_line{{ pc, {size}, {{b1,b2,b3}},"" , {cat_int} }}; sprintf(l._text, "{instr2}\\n", b3, b2); return l;}}'
+        full_instr = f'case 0x{hex_idx}: {{dis_line l = dis_line{{ pc, {size}, {{b1,b2,b3}},"" , {cat_int} }}; sprintf(l._text, "{instr2}\\0", b3, b2); return l;}}'
 
     print(full_instr)
 
@@ -62,6 +62,6 @@ for i in range(256, len(opcodes)):
     instr = ' '.join(parts[:-2])
 
     hex_idx2 = hex(i - 256)[2:].upper().rjust(2,"0")
-    full_instr = f'case 0x{hex_idx2}: return dis_line{{ pc, {size}, {{0xCB,0x{hex_idx2},0x00}},"{instr}\\n" , {cat_int} }};'
+    full_instr = f'case 0x{hex_idx2}: return dis_line{{ pc, {size}, {{0xCB,0x{hex_idx2},0x00}},"{instr}\\0" , {cat_int} }};'
     print(full_instr)
 
